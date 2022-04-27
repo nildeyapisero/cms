@@ -1,0 +1,169 @@
+{% extends 'staff_template/base_template.html' %}
+
+{% block page_title %}
+    View Students
+{% endblock page_title %}
+
+{% block main_content %}
+
+{% load static %}
+
+<section class="content">
+        <div class="container-fluid">
+
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- general form elements -->
+                    <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">View Students</h3>
+                    </div>
+                    <!-- /.card-header -->
+
+                                {% comment %} Display Messages {% endcomment %}
+                                {% if messages %}
+                                <div class="form-group">
+                                <div class="col-12">
+                                    {% for message in messages %}
+                                    {% if message.tags == "error" %}
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 10px;">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        </div>
+                                    {% elif message.tags == "success" %}
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 10px;">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                </div>
+                                {% endif %}
+                            
+
+                        <div class="card-body">
+                           
+                            <div class="form-group">
+                                <label>Subject </label>
+                                <select class="form-control" name="subject" id="subject">
+                                    {% for subject in subjects %}
+                                        <option value="{{ subject.id }}">{{ subject.subject_name }}   ( {{subject.course_id.course_name}} )</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Session Year </label>
+                                <select class="form-control" name="session_year_id" id="session_year_id">
+                                    {% for session_year in session_years %}
+                                        <option value="{{ session_year.id }}">{{ session_year.session_start_year }} to {{ session_year.session_end_year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+
+                        </div>
+                        <!-- /.card-body -->
+
+                        <div class="card-footer">
+                            <button type="button" class="btn btn-primary" id="fetch_students">Fetch Students </button>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="form-group" id="students_block" style="display:none;">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead class="thead-light">
+                                        <tr>
+                                            <th>Students</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="tb">
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="alert alert-danger" id="error_students" style="display:none;">
+
+                                </div>
+
+                                <div class="alert alert-success" id="success_students" style="display:none;">
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.card -->
+
+                </div>
+            </div>
+
+        </div><!-- /.container-fluid -->
+      </section>
+
+  {% endblock main_content %}
+
+{% block custom_js %}
+
+<script>
+    $(document).ready(function(){
+        
+        //Fetching Students
+        $("#fetch_students").click(function(){
+                var subject = $("#subject").val()
+                var session_year_id = $("#session_year_id").val()
+                //console.log(subject)
+                //console.log(session_year_id)
+
+                $.ajax({
+                    url:'{% url 'get_students' %}',
+                    type:'POST',
+                    data:{subject:subject, session_year:session_year_id},
+                })
+
+                
+                .done(function(response){
+                    var json_data = JSON.parse(response);
+                    if(json_data.length>0)
+                    {
+                        var html_data = "";
+                        var data_table = ""
+                        for (key in json_data)
+                        {
+                           data_table += "<tr><td>" + json_data[key]["name"] + "</td></tr>"
+                        }
+                        $("#error_students").html("");
+                        $("#error_students").hide();
+                        $("#students_block").show();
+                        $("#tb").html(data_table);
+                    }
+                    else
+                    {
+                        $("#error_students").html("No Attendance Data Found.");
+                        $("#error_students").show();
+                        $("#students_block").hide();
+                        $("#tb")="<tr><td>No data found</td></tr>" 
+                    }
+                    
+                })
+
+                .fail(function(){
+                    alert("Error in getting Students.")
+                    $("#error_students").html("");
+                    $("#students_block").hide();
+                });
+
+                
+        })
+
+    })
+</script>
+{% endblock custom_js %}
